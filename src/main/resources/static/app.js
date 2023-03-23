@@ -8,6 +8,7 @@ var app = (function () {
     }
     
     var stompClient = null;
+    var id = null;
 
     var addPointToCanvas = function (point) {        
         var canvas = document.getElementById("canvas");
@@ -28,15 +29,19 @@ var app = (function () {
     };
 
 
-    var connectAndSubscribe = function () {
+    var connectAndSubscribe = function (pid) {
+        if (stompClient !== null) {
+            stompClient.disconnect();
+        }
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
         stompClient = Stomp.over(socket);
+        id = pid;
         
         //subscribe to /topic/TOPICXX when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/newpoint', function (eventbody) {
+            stompClient.subscribe('/topic/newpoint.'+id, function (eventbody) {
                 console.log(eventbody);
                 //alert(eventbody.body);
                 addPointToCanvas(JSON.parse(eventbody.body));
@@ -53,11 +58,18 @@ var app = (function () {
             var can = document.getElementById("canvas");
             
             //websocket connection
-            connectAndSubscribe();
+            //connectAndSubscribe();
+
+            //canvas click event
             var publish = this.publishPoint;
             can.addEventListener("pointerdown", function(evt){
-                var point = getMousePosition(evt);
-                publish(point.x, point.y);
+                if (stompClient !== null) {
+                    var point = getMousePosition(evt);
+                    publish(point.x, point.y);
+                } else {
+                    alert("Ingresa un identificador tablero");
+                }
+                
             });
         },
 
@@ -67,7 +79,7 @@ var app = (function () {
             addPointToCanvas(pt);
 
             //publicar el evento
-            stompClient.send("/topic/newpoint", {}, JSON.stringify(pt));
+            stompClient.send("/topic/newpoint."+id, {}, JSON.stringify(pt));
 
         },
 
@@ -77,7 +89,11 @@ var app = (function () {
             }
             setConnected(false);
             console.log("Disconnected");
-        }
+        },
+
+        connection : function(id) {
+            connectAndSubscribe(id);
+        },
     };
 
 })();
