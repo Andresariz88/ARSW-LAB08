@@ -28,6 +28,24 @@ var app = (function () {
         };
     };
 
+    var drawPolygon = function(points) {
+        var c = document.getElementById("canvas");
+        var ctx = c.getContext("2d");
+        ctx.clearRect(0, 0, c.width, c.height);
+        ctx.beginPath();
+        for (i = 0; i < points.length; i++) {
+            if (i == points.length-1) {
+                ctx.moveTo(points[i].x, points[i].y);
+                ctx.lineTo(points[0].x, points[0].y);
+            } else {
+                ctx.moveTo(points[i].x, points[i].y);
+                ctx.lineTo(points[i+1].x, points[i+1].y);
+            }
+        }
+        ctx.stroke();
+        ctx.closePath();
+    };
+
 
     var connectAndSubscribe = function (pid) {
         if (stompClient !== null) {
@@ -48,7 +66,7 @@ var app = (function () {
             });
 
             stompClient.subscribe('/topic/newpolygon.'+id, function (eventbody) {
-                console.log("dibujar poligono");
+                drawPolygon(JSON.parse(eventbody.body));
             });
         });
 
@@ -97,10 +115,6 @@ var app = (function () {
 
         connection : function(id) {
             connectAndSubscribe(id);
-        },
-
-        polygon : function() {
-            stompClient.send("/app/newpolygon."+id, {}, JSON.stringify([{x: 30, y: 11}, {x: 10, y: 21}, {x: 3465, y: 61}]));
         }
     };
 
