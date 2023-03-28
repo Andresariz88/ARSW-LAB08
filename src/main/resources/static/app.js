@@ -46,6 +46,10 @@ var app = (function () {
                 //alert(eventbody.body);
                 addPointToCanvas(JSON.parse(eventbody.body));
             });
+
+            stompClient.subscribe('/topic/newpolygon.'+id, function (eventbody) {
+                console.log("dibujar poligono");
+            });
         });
 
     };
@@ -79,7 +83,7 @@ var app = (function () {
             addPointToCanvas(pt);
 
             //publicar el evento
-            stompClient.send("/topic/newpoint."+id, {}, JSON.stringify(pt));
+            stompClient.send("/app/newpoint."+id, {}, JSON.stringify(pt));
 
         },
 
@@ -94,6 +98,10 @@ var app = (function () {
         connection : function(id) {
             connectAndSubscribe(id);
         },
+
+        polygon : function() {
+            stompClient.send("/app/newpolygon."+id, {}, JSON.stringify([{x: 30, y: 11}, {x: 10, y: 21}, {x: 3465, y: 61}]));
+        }
     };
 
 })();
